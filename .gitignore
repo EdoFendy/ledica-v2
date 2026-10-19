@@ -1,0 +1,11 @@
+node_modules
+.next
+data
+.env
+.env.local
+_crawl
+.impeccable/review
+*.tsbuildinfo
+next-env.d.ts
+.codegraph
+.DS_Store
