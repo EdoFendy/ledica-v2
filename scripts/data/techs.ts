@@ -13,7 +13,7 @@ export const techs: TechSeed[] = [
     name: t("TIG multicatodo", "Multi-cathode TIG"),
     subtitle: t("Due o tre archi TIG in fila sullo stesso giunto", "Two or three TIG arcs in line on the same joint"),
     summary: t("Il modo più diretto per saldare più velocemente i tubi inox sottili sulla profilatrice che hai già.", "The most direct way to weld thin-wall stainless tube faster on the tube mill you already have."),
-    thickMin: 0.5, thickMax: 3.5, image: im("2020_10_TRICATHODE-TORCH-TIG-ON-MILL.jpg")[0],
+    thickMin: 0.2, thickMax: 3, image: im("2020_10_TRICATHODE-TORCH-TIG-ON-MILL.jpg")[0],
     body: t(
 `## Come funziona
 Due o tre elettrodi di tungsteno lavorano in fila sullo stesso giunto. Il primo arco scalda e inizia la fusione, i successivi completano il bagno. La corrente complessiva cresce senza caricare un solo elettrodo, quindi il bagno resta lungo e stabile anche quando la linea accelera.
@@ -21,7 +21,7 @@ Due o tre elettrodi di tungsteno lavorano in fila sullo stesso giunto. Il primo 
 Ogni torcia si regola in altezza e lateralmente in modo indipendente ed è raffreddata ad acqua. Un campo magnetico controlla la forma dell'arco (deviazione magnetica). Sul terzo elettrodo l'oscillatore d'arco magnetico sposta il bagno avanti e indietro: le inclusioni di gas e le impurità vengono rimosse dal cordone.
 
 ## Dove si usa
-- Tubi in inox austenitico da 0,5 a 3,5 mm.
+- Tubi in inox austenitico da 0,2 a 3,00 mm.
 - Sopra i 3 mm, torce con primo e terzo elemento regolabili (25–38 mm) per contenere l'onda che si forma nel bagno ad alta corrente.
 - Grossi spessori con la torcia monocatodo da 1000 A, anche in key-hole.
 
@@ -40,7 +40,7 @@ Two or three tungsten electrodes work in line on the same joint. The first arc h
 Each torch adjusts in height and sideways independently and is water-cooled. A magnetic field controls the arc shape (magnetic deviation). On the third electrode the magnetic arc oscillator moves the pool back and forth: gas inclusions and impurities are removed from the bead.
 
 ## Where it is used
-- Austenitic stainless tube from 0.5 to 3.5 mm.
+- Austenitic stainless tube from 0.2 to 3.00 mm.
 - Above 3 mm, torches with adjustable first and third elements (25–38 mm) to contain the wave that forms in the pool at high current.
 - Heavy walls with the 1000 A single-cathode torch, key-hole included.
 
@@ -63,8 +63,8 @@ Torch with connection block for the existing plant, power sources, control cabin
     id: "plasma-key-hole", slug_it: "plasma-key-hole", slug_en: "plasma-keyhole",
     name: t("Plasma key-hole", "Plasma key-hole"),
     subtitle: t("L'intero spessore saldato in una sola passata", "The full wall welded in a single pass"),
-    summary: t("Per i tubi a parete spessa: il plasma fora il giunto e lo salda in una passata, da 3,5 a 10 mm e fino a 12 mm nelle forniture dichiarate.", "For heavy-wall tube: the plasma pierces the joint and welds it in one pass, from 3.5 to 10 mm and up to 12 mm on declared supplies."),
-    thickMin: 3.5, thickMax: 12, image: im("2020_10_TRICATHODE-PLASMA-PLASMA-TIG-TORCH-MAGNETIC-ARC-OSCILLATOR-LASER-SENSOR-TRACKER-COLD-WIRE-FEEDER-scaled.jpg")[0],
+    summary: t("Per i tubi a parete spessa: il plasma fora il giunto e lo salda in una passata, da 3,00 a 12,70 mm.", "For heavy-wall tube: the plasma pierces the joint and welds it in one pass, from 3.00 to 12.70 mm."),
+    thickMin: 3, thickMax: 12.7, image: im("2020_10_TRICATHODE-PLASMA-PLASMA-TIG-TORCH-MAGNETIC-ARC-OSCILLATOR-LASER-SENSOR-TRACKER-COLD-WIRE-FEEDER-scaled.jpg")[0],
     body: t(
 `## Come funziona
 La colonna di plasma è abbastanza concentrata da attraversare tutta la parete: si apre un piccolo foro, il key-hole, che avanza con il giunto. Il metallo fuso scorre dietro il foro e lo richiude. Il risultato è una saldatura a piena penetrazione in un solo passaggio, senza riempire il giunto a più riprese.
@@ -73,11 +73,11 @@ Dietro il plasma lavora una torcia TIG con oscillatore d'arco magnetico: distrib
 
 ## Dove si usa
 - Torcia TIG-plasma-TIG: da 3,5 a 10 mm testa a testa.
-- Torcia plasma-plasma-TIG: fino a 10 mm di catalogo, con filo freddo e segui-giunto laser.
+- Torcia plasma-plasma-TIG: da 3,00 a 12,70 mm, con filo freddo e segui-giunto laser.
 - Tubi ASTM A358 classi 1, 2 e 5 per oleodotti, Ø 160–505 mm: fino a 12 mm in una passata, insieme alla ripresa interna con telecamera.
 
 ## Quando sceglierla
-- Saldi pareti oltre 3,5 mm e oggi ti servono più passate.
+- Saldi pareti oltre 3 mm e oggi ti servono più passate.
 - Il giunto deve essere omogeneo e privo di inclusioni.
 - Vuoi saldare esterno e interno in contemporanea.
 
@@ -90,11 +90,11 @@ Behind the plasma, a TIG torch with magnetic arc oscillator spreads the bead, cl
 
 ## Where it is used
 - TIG-plasma-TIG torch: 3.5 to 10 mm butt welds.
-- Plasma-plasma-TIG torch: up to 10 mm catalogue, with cold wire and laser seam tracker.
+- Plasma-plasma-TIG torch: 3.00 to 12.70 mm, with cold wire and laser seam tracker.
 - ASTM A358 classes 1, 2 and 5 pipeline tube, Ø 160–505 mm: up to 12 mm in one pass, together with camera-equipped ID welding.
 
 ## When to choose it
-- You weld walls above 3.5 mm and currently need several passes.
+- You weld walls above 3 mm and currently need several passes.
 - The joint must be homogeneous and inclusion-free.
 - You want to weld outside and inside at the same time.
 
@@ -111,7 +111,7 @@ Torch, power sources, control cabinet and, if needed, ID welding with camera and
     name: t("Combo plasma + TIG", "Plasma + TIG combo"),
     subtitle: t("Il plasma prepara il giunto, i TIG lo saldano", "The plasma prepares the joint, the TIGs weld it"),
     summary: t("Il plasma SP3 davanti ai TIG porta fino al +40% di produzione su inox e dimezza i fermi per manutenzione.", "SP3 plasma ahead of the TIGs brings up to +40% stainless output and halves maintenance stops."),
-    thickMin: 0.5, thickMax: 10, image: im("2020_10_PLASMA-TIG-STX.jpg")[0],
+    thickMin: 0.2, thickMax: 3, image: im("2020_10_PLASMA-TIG-STX.jpg")[0],
     body: t(
 `## Come funziona
 Una torcia plasma SP3 lavora davanti alle torce TIG. Scalda i lembi e brucia lo sporco della superficie prima che arrivi agli elettrodi. I TIG trovano un giunto pulito e già in temperatura: possono saldare più velocemente e gli elettrodi si consumano meno, quindi la linea si ferma meno spesso per rifarli.
@@ -120,7 +120,7 @@ Una torcia plasma SP3 lavora davanti alle torce TIG. Scalda i lembi e brucia lo 
 - **SP3 + TIG STX 600 A**: per inox e titanio.
 - **SP3 + bicatodo TIG-TIG**: fino al +40% rispetto alla sola bicatodo.
 - **SP3 + tricatodo TIG-TIG-TIG**: fino al +40% rispetto alla sola tricatodo, con oscillazione magnetica del terzo arco.
-- **Sistema combo TTT/TPT**: un impianto con due torce intercambiabili, da 0,5 a 10 mm, cambio torcia in circa 15 minuti.
+- **Sistema combo TTT/PPT**: un impianto con due torce intercambiabili, tricatodo TIG-TIG-TIG da 0,2 a 3,00 mm e plasma-plasma-TIG da 3,00 a 12,70 mm, cambio torcia in circa 15 minuti.
 
 ## Risultati dichiarati
 Su AISI serie 300 con SP3 + tricatodo: circa **8,5 m/min** a 1 mm, **4,5 m/min** a 2 mm, **2,5 m/min** a 3 mm. Fermi per manutenzione dimezzati.
@@ -136,7 +136,7 @@ An SP3 plasma torch works ahead of the TIG torches. It heats the edges and burns
 - **SP3 + STX 600 A TIG**: for stainless and titanium.
 - **SP3 + TIG-TIG bi-cathode**: up to +40% versus bi-cathode alone.
 - **SP3 + TIG-TIG-TIG tri-cathode**: up to +40% versus tri-cathode alone, with magnetic oscillation of the third arc.
-- **TTT/TPT combo system**: one plant with two interchangeable torches, 0.5 to 10 mm, torch change in about 15 minutes.
+- **TTT/PPT combo system**: one plant with two interchangeable torches, TIG-TIG-TIG tri-cathode from 0.2 to 3.00 mm and plasma-plasma-TIG from 3.00 to 12.70 mm, torch change in about 15 minutes.
 
 ## Declared results
 On AISI 300 series with SP3 + tri-cathode: about **8.5 m/min** at 1 mm, **4.5 m/min** at 2 mm, **2.5 m/min** at 3 mm. Maintenance stops halved.
@@ -147,7 +147,7 @@ On AISI 300 series with SP3 + tri-cathode: about **8.5 m/min** at 1 mm, **4.5 m/
 - You run very different thicknesses on the same line (combo system).`),
     materials: [t("Inox AISI serie 300", "AISI 300 series stainless"), t("Titanio", "Titanium")],
     faq: [
-      { q: t("Il +40% vale per ogni spessore?", "Does the +40% apply to every thickness?"), a: t("È dichiarato soprattutto per inox da 0,5 a 3,00 mm. Per spessori e materiali diversi lo verifichiamo con una prova.", "It is declared mainly for stainless from 0.5 to 3.00 mm. For other thicknesses and materials we check it with a test.") },
+      { q: t("Il +40% vale per ogni spessore?", "Does the +40% apply to every thickness?"), a: t("È dichiarato soprattutto per inox da 0,2 a 3,00 mm. Per spessori e materiali diversi lo verifichiamo con una prova.", "It is declared mainly for stainless from 0.2 to 3.00 mm. For other thicknesses and materials we check it with a test.") },
       { q: t("Si aggiunge a una tricatodo che ho già?", "Can it be added to a tri-cathode I already own?"), a: t("È la configurazione SP3 + tricatodo: indicaci modello e anno della torcia installata e valutiamo il retrofit.", "That is the SP3 + tri-cathode configuration: tell us the model and year of the installed torch and we assess the retrofit.") },
     ],
   },

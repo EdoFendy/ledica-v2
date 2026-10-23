@@ -4,32 +4,33 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Lang } from "@/lib/types";
 
 export type Lane = { key: string; name: string; href: string; min: number; max: number; summary: string };
-const MAX = 12;
+const MAX = 12.7; // fondo scala = massimo dichiarato del plasma key-hole
 const MIN = 0.2;
 const f = (n: number, lang: Lang) => n.toFixed(1).replace(".", lang === "it" ? "," : ".");
 const clamp = (n: number) => Math.min(MAX, Math.max(MIN, Math.round(n * 10) / 10));
 
-export function Ruler({ lanes, lang, title, hint, covers, none, see, start = 2, onValue }: { lanes: Lane[]; lang: Lang; title: string; hint: string; covers: string; none: string; see: string; start?: number; onValue?: (v: number) => void }) {
+export function Ruler({ lanes, lang, title, hint, covers, none, see, start = 2, intro = true, value, onValue, children }: { lanes: Lane[]; lang: Lang; title: string; hint: string; covers: string; none: string; see: string; start?: number; intro?: boolean; value?: { v: number }; onValue?: (v: number) => void; children?: React.ReactNode }) {
   const [v, setV] = useState(start);
   useEffect(() => { onValue?.(v); }, [v, onValue]);
+  useEffect(() => { if (value) setV(clamp(value.v)); }, [value]); // valore imposto da fuori: oggetto nuovo a ogni clic, anche sulla stessa misura
   const ref = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const pct = (n: number) => `${(n / MAX) * 100}%`;
 
   // ingresso: il cursore scende da 12 mm a start, una sola volta
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!intro || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let raf = 0; const t0 = performance.now(); const D = 1400;
     const tick = (t: number) => {
       const k = Math.min(1, (t - t0) / D); const e = 1 - Math.pow(1 - k, 4);
-      setV(clamp(12 + (start - 12) * e));
+      setV(clamp(MAX + (start - MAX) * e));
       if (k < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     const stop = () => cancelAnimationFrame(raf);
     ref.current?.addEventListener("pointerdown", stop, { once: true });
     return stop;
-  }, [start]);
+  }, [start, intro]);
 
   const fromEvent = useCallback((e: React.PointerEvent) => {
     const r = ref.current!.getBoundingClientRect();
@@ -37,7 +38,7 @@ export function Ruler({ lanes, lang, title, hint, covers, none, see, start = 2, 
   }, []);
 
   const on = lanes.filter((l) => v >= l.min && v <= l.max);
-  const ticks = Array.from({ length: MAX * 2 + 1 }, (_, i) => i / 2);
+  const ticks = Array.from({ length: Math.floor(MAX * 2) + 1 }, (_, i) => i / 2);
 
   return (
     <div className="ruler-wrap">
@@ -46,6 +47,7 @@ export function Ruler({ lanes, lang, title, hint, covers, none, see, start = 2, 
           <h2>{title}</h2>
           <span className="hint">{hint}</span>
         </div>
+        {children}
         <div
           ref={ref} className="ruler" role="slider" tabIndex={0}
           aria-label={title} aria-valuemin={MIN} aria-valuemax={MAX} aria-valuenow={v}
@@ -75,7 +77,7 @@ export function Ruler({ lanes, lang, title, hint, covers, none, see, start = 2, 
           </div>
           <div className="r-scale">
             {ticks.map((t) => (<i key={t} className={`r-tick${Number.isInteger(t) ? " m" : ""}`} style={{ left: pct(t) }} />))}
-            {Array.from({ length: MAX + 1 }, (_, i) => i).filter((i) => i % 2 === 0 || i === 1 || i === 3).map((i) => (
+            {Array.from({ length: Math.floor(MAX) + 1 }, (_, i) => i).filter((i) => i % 2 === 0 || i === 1 || i === 3).map((i) => (
               <span key={i} className="r-lbl mono" style={{ left: pct(i) }}>{i}</span>
             ))}
           </div>

@@ -6,6 +6,7 @@ import { TechList, TechDetail } from "@/views/Techs";
 import { ProductList, ProductDetail } from "@/views/Products";
 import { CaseList, CaseDetail } from "@/views/Cases";
 import { AppList, AppDetail, NewsList, NewsDetail, Company, Contact, RfqPage, PageView } from "@/views/Misc";
+import { LegalView } from "@/views/Legal";
 import { loadPage } from "@/lib/page";
 import { abs } from "@/lib/routes";
 import { allProducts } from "@/lib/site";
@@ -58,6 +59,7 @@ export default async function Page({ params, searchParams }: Props) {
     if (section === "company") body = <Company lang={lang} row={row} />;
     else if (section === "contact") body = <Contact lang={lang} products={prods} />;
     else if (section === "rfq") body = <RfqPage lang={lang} products={prods} kind={sp.tipo} product={sp.prodotto} />;
+    else if (row && (section === "privacy" || section === "cookie")) body = <LegalView lang={lang} row={row} kind={section} />;
     else if (row) body = <PageView lang={lang} row={row} />;
   } else if (row) {
     body = { products: <ProductDetail lang={lang} row={row} />, technologies: <TechDetail lang={lang} row={row} />, cases: <CaseDetail lang={lang} row={row} />, applications: <AppDetail lang={lang} row={row} />, news: <NewsDetail lang={lang} row={row} /> }[section as string] ?? null;

@@ -22,7 +22,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const site = getSite();
   const admin = h.get("x-admin") === "1";
   return (
-    <html lang={lang} className={`${archivo.variable} ${mono.variable}`}>
+    <html lang={lang} className={`${archivo.variable} ${mono.variable}`} suppressHydrationWarning /* data-intro-pending impostato prima dell'idratazione dall'intro della home */>
       <body>
         {children}
         {!admin && <CookieBanner lang={lang} ga4={site.tracking?.ga4 ?? ""} />}

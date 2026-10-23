@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { Img } from "@/components/Img";
-import { TechDiagram } from "@/components/TechDiagram";
 import { Md } from "@/components/Md";
 import { PTile } from "@/components/PTile";
-import { Ruler, type Lane } from "@/components/Ruler";
+import type { Lane } from "@/components/Ruler";
+import { TorchLab, TechProcess } from "@/components/TorchLab";
 import { CtaBand, PageHead, JsonLd, crumbLd } from "@/components/Bits";
 import { Arrow } from "@/components/Icons";
 import { dict } from "@/lib/dict";
@@ -20,7 +20,7 @@ export function TechList({ lang }: { lang: Lang }) {
   return (
     <>
       <PageHead lang={lang} crumbs={[{ label: "LE.DI.CA.", href: sectionHref(lang) }, { label: t.nav_tech }]} title={t.tech_title} />
-      <div className="dark" style={{ marginTop: -1 }}><Ruler lanes={lanes} lang={lang} title={t.ruler_title} hint={t.ruler_hint} covers={t.ruler_covers} none={t.ruler_none} see={t.ruler_see} /></div>
+      <div style={{ marginTop: -1 }}><TorchLab lang={lang} lanes={lanes} /></div>
       <section className="sec"><div className="wrap">
         {techs.map((r) => (
           <Link key={r.id} href={itemHref(lang, r)} className="trow has-img">
@@ -48,7 +48,7 @@ export function TechDetail({ lang, row }: { lang: Lang; row: Row }) {
       <JsonLd data={crumbLd([{ name: "LE.DI.CA.", path: sectionHref(lang) }, { name: t.nav_tech, path: sectionHref(lang, "technologies") }, { name: tr(d.name, lang), path: itemHref(lang, row) }])} />
       <PageHead lang={lang} crumbs={crumbs} title={tr(d.name, lang)} lead={tr(d.subtitle, lang)}
         aside={hasRange(d) ? <div><div className="mono muted" style={{ fontSize: ".85rem" }}>{t.thickness}</div><div className="case-big">{range(d.thickMin, d.thickMax, lang)}</div></div> : <div className="case-big" style={{ fontSize: "clamp(1.6rem,3vw,2.4rem)" }}>{tr(d.scope, lang)}</div>} />
-      <section className="sec-s dark" style={{ paddingTop: 0, paddingBottom: "clamp(40px,6vw,72px)" }}><div className="wrap"><TechDiagram tech={d.key} lang={lang} /></div></section>
+      <TechProcess lang={lang} tech={d.key} />
       <section className="sec"><div className="wrap split">
         <div><Md text={tr(d.body, lang)} /></div>
         <aside>
@@ -93,7 +93,7 @@ export function Scope({ r, lang }: { r: Row; lang: Lang }) {
   if (!hasRange(d)) return <div className="mini-range mono" style={{ alignSelf: "center" }}>{tr(d.scope, lang)}</div>;
   return (
     <div>
-      <div className="mini-scale" aria-hidden="true"><span className="mini-bar" style={{ left: `${(d.thickMin / 12) * 100}%`, width: `${((d.thickMax - d.thickMin) / 12) * 100}%` }} /></div>
+      <div className="mini-scale" aria-hidden="true"><span className="mini-bar" style={{ left: `${(d.thickMin / 12.7) * 100}%`, width: `${((d.thickMax - d.thickMin) / 12.7) * 100}%` }} /></div>
       <div className="mini-range mono">{range(d.thickMin, d.thickMax, lang)}</div>
     </div>
   );
