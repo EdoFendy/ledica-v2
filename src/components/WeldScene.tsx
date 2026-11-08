@@ -7,6 +7,8 @@ import { Rotate3d } from "lucide-react";
 import { laserHead } from "./laserHead";
 import { comboHead } from "./comboHead";
 import { plasmaHead } from "./plasmaHead";
+import { innerTig } from "./innerTig";
+import { tubeCut } from "./world/tubeCut";
 import { torchMode as modeOf, type TorchMode as Mode } from "./torchMode";
 
 export type SceneLabels = { laser: string; combo: string; keyhole: string; wall: string; drag: string };
@@ -69,21 +71,22 @@ export default function WeldScene({ v, labels, onReady }: { v: number; labels: S
     const steel = new THREE.MeshStandardMaterial({ map: mapT, metalness: 0.95, roughness: 0.3, color: 0xe4e8eb, envMapIntensity: 1.15 });
     const tube = new THREE.Group(); scene.add(tube);
     const L = X1 - X0; mapT.repeat.y = 4 * L / 10.6; // tubo lungo: le viste laterali non ne mostrano la fine
-    const outer = new THREE.Mesh(new THREE.CylinderGeometry(R, R, L, 96, 1, true), steel);
-    outer.rotation.z = Math.PI / 2; outer.position.x = (X0 + X1) / 2; outer.receiveShadow = true; tube.add(outer);
-    const innerMat = new THREE.MeshStandardMaterial({ color: 0x8d949a, metalness: 0.9, roughness: 0.45, side: THREE.BackSide });
+    const innerMat = new THREE.MeshStandardMaterial({ color: 0x4a5056, metalness: 0.85, roughness: 0.5, side: THREE.BackSide }); // interno in ombra: l'arco della torcia interna si legge
     const capMat = new THREE.MeshStandardMaterial({ color: 0xf1f3f4, metalness: 1, roughness: 0.22, side: THREE.DoubleSide, envMapIntensity: 1.4 });
-    let inner: THREE.Mesh, cap: THREE.Mesh, curWall = -1;
-    const setWall = (w: number) => {
-      if (Math.abs(w - curWall) < 0.002) return; curWall = w;
-      inner?.geometry.dispose(); cap?.geometry.dispose(); inner && tube.remove(inner); cap && tube.remove(cap);
-      inner = new THREE.Mesh(new THREE.CylinderGeometry(R - w, R - w, L, 96, 1, true), innerMat);
-      inner.rotation.z = Math.PI / 2; inner.position.x = (X0 + X1) / 2;
-      cap = new THREE.Mesh(new THREE.RingGeometry(R - w, R, 96), capMat);
-      cap.rotation.y = -Math.PI / 2; cap.position.x = X0 - 0.001;
-      tube.add(inner, cap);
+    // plasma: ~60 cm dopo la saldatura (1 unità ≈ 240 mm alla scala della testa) il tubo è aperto a metà e mostra la torcia TIG interna
+    const XI = -2.5, WIN = { w0: XI - .7, w1: XI + .8, a0: -Math.PI / 2, a1: Math.PI / 2 };
+    const innerSet = new THREE.Group(); innerSet.position.x = XI;
+    let shell: THREE.Group | undefined, curWall = -1, curOpen = false;
+    const setWall = (w: number, open: boolean) => {
+      if (Math.abs(w - curWall) < 0.002 && open === curOpen) return; curWall = w; curOpen = open;
+      if (shell) { tube.remove(shell); shell.traverse((o) => (o as THREE.Mesh).geometry?.dispose()); }
+      shell = tubeCut(R, R - w, X0, X1, { out: steel, in: innerMat, face: capMat }, open ? WIN : undefined);
+      const cap = new THREE.Mesh(new THREE.RingGeometry(R - w, R, 96), capMat);
+      cap.rotation.y = -Math.PI / 2; cap.position.x = X0 - 0.001; shell.add(cap); tube.add(shell);
+      innerSet.position.y = R - w; // la torcia interna segue la parete
+      renderer.shadowMap.needsUpdate = true;
     };
-    setWall(wallOf(vRef.current));
+    setWall(wallOf(vRef.current), modeOf(vRef.current) === "keyhole");
 
     // ---- giunto: fessura davanti, cordone caldo dietro
     const groove = new THREE.Mesh(new THREE.BoxGeometry(X1, 0.012, 0.03), new THREE.MeshStandardMaterial({ color: 0x15181a, metalness: .4, roughness: .8 }));
@@ -96,7 +99,11 @@ export default function WeldScene({ v, labels, onReady }: { v: number; labels: S
     const sets: Record<Mode, THREE.Group> = { laser: new THREE.Group(), combo: new THREE.Group(), keyhole: new THREE.Group() };
     sets.laser.add(laserHead(R + 0.42));
     const combo = comboHead(R + 0.06); sets.combo.add(combo.g);
-    const heavy = plasmaHead(R + 0.06); sets.keyhole.add(heavy.g);
+    const heavy = plasmaHead(R + 0.06); sets.keyhole.add(heavy.g, innerSet);
+    const innerT = innerTig(.0026); innerT.rotation.y = Math.PI; innerT.position.y = -.05; innerSet.add(innerT); // ceramica verso l'alto, barra verso l'ingresso del tubo (+x)
+    const rootHot = new THREE.Mesh(new THREE.BoxGeometry(XI - X0, .014, .06), new THREE.MeshStandardMaterial({ color: 0xaab0b5, metalness: .9, roughness: .35, emissive: 0xffffff, emissiveMap: heatTex(), emissiveIntensity: 1.6 }));
+    rootHot.position.set((X0 - XI) / 2, -.006, 0); innerSet.add(rootHot); // radice ripassata: calda sotto la torcia interna, si raffredda verso l'uscita
+    const innerLight = new THREE.PointLight(0x9cc0ff, 2.5, 3, 1.6); innerLight.position.set(.25, -.35, .3); innerSet.add(innerLight);
     Object.values(sets).forEach((g) => torch.add(g));
 
     // ---- archi: coni additivi + nucleo
@@ -113,6 +120,9 @@ export default function WeldScene({ v, labels, onReady }: { v: number; labels: S
     heavy.plasma.forEach(([x, y]) => { const a = mkArc(x, y - R - 0.02, 0.09, 0xc9a8ff); sets.keyhole.add(a); arcs.push(a); });
     const ht = mkArc(heavy.tig[0], heavy.tig[1] - R - 0.02, 0.06, 0x8fb8ff); sets.keyhole.add(ht); arcs.push(ht);
     const beam = mkArc(0, 0.42, 0.03, 0xff7a4a); sets.laser.add(beam); arcs.push(beam);
+    const ia = mkArc(0, .046, .05, 0x8fb8ff); ia.position.y = -.004; ia.rotation.z = Math.PI; innerSet.add(ia); arcs.push(ia); // arco verso l'alto, sulla radice
+    const innerPool = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex("rgba(255,255,255,1)", "rgba(150,190,255,.6)"), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+    innerPool.scale.setScalar(.32); innerSet.add(innerPool);
 
     // ---- bagno + luce + scintille
     const poolMat = new THREE.MeshBasicMaterial({ map: glowTex("rgba(255,255,255,1)", "rgba(255,140,40,.7)"), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
@@ -140,7 +150,7 @@ export default function WeldScene({ v, labels, onReady }: { v: number; labels: S
     const views: Record<Mode, [THREE.Vector3, THREE.Vector3]> = {
       laser: [new THREE.Vector3(-2.3, 3.2, 7.2), new THREE.Vector3(0.3, 2.3, 0)],
       combo: [new THREE.Vector3(-1.5, 2.55, 5.0), new THREE.Vector3(0, 1.95, 0)],
-      keyhole: [new THREE.Vector3(-2.8, 3.5, 9.0), new THREE.Vector3(0, 2.5, 0)],
+      keyhole: [new THREE.Vector3(-3.8, 2.9, 10.4), new THREE.Vector3(-1.2, 1.85, 0)], // torce sopra e, a sinistra, la torcia interna nello spaccato
     };
     camera.position.copy(views[mode][0]); renderer.shadowMap.needsUpdate = true;
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -164,7 +174,7 @@ export default function WeldScene({ v, labels, onReady }: { v: number; labels: S
       const vv = vRef.current; const m = modeOf(vv);
       if (m !== mode) { mode = m; renderer.shadowMap.needsUpdate = true; flying = true; idle = 0; if (reduced) { camera.position.copy(views[m][0]); controls.target.copy(views[m][1]); flying = false; } }
       (Object.keys(sets) as Mode[]).forEach((k) => (sets[k].visible = k === mode));
-      setWall(wallOf(vv));
+      setWall(wallOf(vv), m === "keyhole");
       if (flying) {
         const k = Math.min(1, dt * 2.5);
         camera.position.lerp(views[mode][0], k); controls.target.lerp(views[mode][1], k);
@@ -190,7 +200,7 @@ export default function WeldScene({ v, labels, onReady }: { v: number; labels: S
       if (!shown) { shown = true; el.style.opacity = "1"; onReady?.(); }
       // etichette HTML ancorate alla scena
       if (wallLab.current) {
-        tmp.set(X0, R - wallOf(vv) / 2, 0).project(camera);
+        tmp.set(m === "keyhole" ? WIN.w1 : X0, R - wallOf(vv) / 2, 0).project(camera); // plasma: sulla sezione di parete dello spaccato
         wallLab.current.style.transform = `translate(${Math.max(130, (tmp.x * .5 + .5) * w)}px, ${(-tmp.y * .5 + .5) * h}px)`; // l'etichetta è allineata a destra: mai fuori dal bordo sinistro
       }
       if (!reduced) raf = requestAnimationFrame(frame);

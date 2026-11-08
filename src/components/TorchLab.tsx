@@ -61,8 +61,10 @@ const PROCESS: Record<ProcessKey, { steps: [T2, T2][]; tags: Record<string, T2>;
       [["Il key-hole", "The key-hole"], ["La colonna di plasma attraversa tutta la parete: si apre un piccolo foro che avanza con il giunto.", "The plasma column crosses the whole wall: a small hole opens and travels with the joint."]],
       [["Il TIG", "The TIG"], ["Dietro il plasma, il TIG con oscillatore d'arco distribuisce il cordone, chiude le incisioni e rimuove le inclusioni.", "Behind the plasma, the TIG with arc oscillator spreads the bead, closes undercut and removes inclusions."]],
       [["Una passata", "One pass"], ["Il metallo fuso richiude il foro: piena penetrazione in un solo passaggio.", "The molten metal closes the hole: full penetration in a single pass."]],
+      [["La torcia interna", "The inside torch"], ["Circa 60 cm dopo, una torcia TIG montata capovolta dentro il tubo, con la ceramica verso l'alto, ripassa la radice dall'interno.", "About 60 cm further on, a TIG torch mounted upside down inside the tube, ceramic facing up, re-passes the root from the inside."]],
     ],
-    tags: { keyhole: ["key-hole attraverso la parete", "key-hole through the wall"], tig: ["TIG con oscillatore", "TIG with oscillator"], fusion: ["piena penetrazione", "full penetration"], onepass: ["una sola passata", "single pass"] },
+    tags: { keyhole: ["key-hole attraverso la parete", "key-hole through the wall"], tig: ["TIG con oscillatore", "TIG with oscillator"], fusion: ["piena penetrazione", "full penetration"], onepass: ["una sola passata", "single pass"],
+      inner: ["torcia TIG interna, capovolta", "inside TIG torch, upside down"], reroot: ["radice ripassata dall'interno", "root re-passed from inside"], dist: ["≈ 60 cm dopo la saldatura", "≈ 60 cm after the weld"] },
   },
   "generatori-accessori": {
     schematic: true, wave: ["corrente pulsata 15 kHz", "15 kHz pulsed current"],
@@ -78,10 +80,10 @@ const PROCESS: Record<ProcessKey, { steps: [T2, T2][]; tags: Record<string, T2>;
     schematic: true,
     steps: [
       [["Dall'esterno", "From outside"], ["La saldatura esterna lascia all'interno del tubo un cordone in rilievo.", "The outside weld leaves a raised bead inside the tube."]],
-      [["La torcia interna", "The inside torch"], ["Una torcia TIG montata su un braccio entra nel tubo e lavora sul cordone appena formato.", "A TIG torch on a boom enters the tube and works on the freshly formed bead."]],
+      [["La torcia interna", "The inside torch"], ["Circa 60 cm dopo la saldatura esterna, una torcia TIG capovolta, montata su un braccio dentro il tubo, lavora sul cordone appena formato.", "About 60 cm after the outside weld, an upside-down TIG torch on a boom inside the tube works on the freshly formed bead."]],
       [["Cordone piatto", "Flat bead"], ["L'oscillatore d'arco lo distribuisce e lo appiattisce: il laminatoio non serve.", "The arc oscillator spreads and flattens it: no rolling mill needed."]],
     ],
-    tags: { outside: ["saldatura esterna", "outside weld"], relief: ["cordone interno in rilievo", "raised inside bead"], inner: ["torcia TIG interna", "inside TIG torch"], flat: ["cordone interno appiattito", "flattened inside bead"], fusion: ["sezione", "section"] },
+    tags: { outside: ["saldatura esterna", "outside weld"], relief: ["cordone interno in rilievo", "raised inside bead"], inner: ["torcia TIG interna", "inside TIG torch"], flat: ["cordone interno appiattito", "flattened inside bead"], fusion: ["sezione", "section"], dist: ["≈ 60 cm tra le due torce", "≈ 60 cm between the torches"] },
   },
 };
 
@@ -99,7 +101,7 @@ export function TechProcess({ lang, tech }: { lang: Lang; tech: string }) {
   };
   return (
     <section className="sec-s dark proc-sec"><div className="wrap">
-      <p className="mono muted lab-solo-k">{L(lang, "Come funziona · spaccato 3D in tre passi", "How it works · 3D cutaway in three steps")}</p>
+      <p className="mono muted lab-solo-k">{L(lang, `Come funziona · spaccato 3D in ${p.steps.length === 4 ? "quattro" : "tre"} passi`, `How it works · 3D cutaway in ${p.steps.length === 4 ? "four" : "three"} steps`)}</p>
       <ProcessScene tech={tech as ProcessKey} text={text} />
     </div></section>
   );

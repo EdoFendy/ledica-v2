@@ -5,6 +5,8 @@ import { laserHead } from "../laserHead";
 import { comboHead } from "../comboHead";
 import { plasmaHead } from "../plasmaHead";
 import { tigTorch } from "../tigTorch";
+import { innerTig } from "../innerTig";
+import { tubeCut, type TubeWindow } from "./tubeCut";
 
 /* Spaccato di processo per le schede tecnologia: la torcia lavora sul tubo, tagliato in sezione subito dopo l'ultimo arco.
    Lato saldato (x ≥ cut) pieno; lato in arrivo trasparente, con il giunto aperto. Sulla faccia di taglio la zona fusa e la ZTA.
@@ -15,7 +17,7 @@ type Arc = { x: number; tip: number; w: number; col: number; osc?: boolean; z?: 
 type FZ = [number, number, number, number, number, number?]; // larghezza in alto/metà/radice, corona, rovescio, profondità (1 = piena penetrazione)
 type Rig = { z: number; fz: FZ; arcs: Arc[]; full: boolean }; // un tubo con la sua sezione: più rig = confronto affiancato
 type Step = { cam: V3; tgt: V3; tags: string[] };
-type Built = { arcs: Arc[]; cut: number; anchors: Record<string, V3>; fz: FZ; rigs?: Rig[]; extra?: (s: Scene) => void };
+type Built = { arcs: Arc[]; cut: number; anchors: Record<string, V3>; fz: FZ; rigs?: Rig[]; extra?: (s: Scene) => void; win?: TubeWindow; dim?: [number, number, number] }; // dim: quota x1 → x2 all'altezza y
 type Scene = { scene: THREE.Scene; R: number; wall: number; cut: number; heat: THREE.Texture; glow: THREE.Texture };
 export type ProcessKey = "laser-fibra" | "tig-multicatodo" | "combo-plasma-tig" | "plasma-key-hole" | "ripresa-interna" | "generatori-accessori";
 
@@ -62,37 +64,46 @@ const CFG: Record<ProcessKey, { R: number; wall: number; build: (g: THREE.Group,
   },
   "plasma-key-hole": {
     R: 1.4, wall: .42,
-    build: (g, R) => {
+    build: (g, R, wall) => {
       const p = plasmaHead(R + .06); g.add(p.g);
-      return { arcs: [...p.plasma.map(([x, tip]) => ({ x, tip, w: .1, col: VIOLET })), { x: p.tig[0], tip: p.tig[1], w: .07, col: BLUE, osc: true }], cut: p.tig[0] + .05, fz: [.3, .12, .2, .04, .04],
-        anchors: { keyhole: [p.plasma[1][0], R - .21, .05], tig: [p.tig[0], R + .12, 0], fusion: [p.tig[0] + .05, R - .2, 0], onepass: [1.7, R + .05, 0] } };
+      // torcia TIG interna capovolta, ceramica verso l'alto, ~60 cm dopo la saldatura (stessa scala della testa: 1 unità ≈ 240 mm)
+      const cut = p.tig[0] + .05, IX = cut + 2.5, Ri = R - wall, itip = Ri - .05;
+      const inner = innerTig(.0026); inner.position.set(IX, itip, 0); g.add(inner);
+      return { arcs: [...p.plasma.map(([x, tip]) => ({ x, tip, w: .1, col: VIOLET })), { x: p.tig[0], tip: p.tig[1], w: .07, col: BLUE, osc: true }, { x: IX, tip: itip, w: .06, col: BLUE }], cut, fz: [.3, .12, .2, .04, .04],
+        anchors: { keyhole: [p.plasma[1][0], R - .21, .05], tig: [p.tig[0], R + .12, 0], fusion: [p.tig[0] + .05, R - .2, 0], onepass: [1.7, R + .05, 0], inner: [IX + .05, Ri - .8, 0], reroot: [IX + .6, Ri - .01, 0], dist: [(p.tig[0] + IX) / 2, R + .14, 0] },
+        dim: [p.tig[0], IX, R + .14],
+        win: { w0: IX - .9, w1: IX + 1, a0: -Math.PI / 2, a1: Math.PI / 2 }, // metà anteriore tolta: torcia, arco e radice stanno sul piano di taglio
+        extra: ({ scene, heat }) => { // radice ripassata: torna incandescente sotto la torcia interna e si raffredda dopo; luce dell'arco dentro il tubo
+          const rr = new THREE.Mesh(new THREE.BoxGeometry(7 - (IX - cut), .016, .07), new THREE.MeshStandardMaterial({ color: 0xaab0b5, metalness: .9, roughness: .35, emissive: 0xffffff, emissiveMap: heat, emissiveIntensity: 1.8 }));
+          rr.position.set((IX + cut + 7) / 2, Ri - .007, 0); scene.add(rr);
+          const l = new THREE.PointLight(BLUE, 3.2, 3.5, 1.6); l.position.set(IX - .2, Ri - .35, .25); scene.add(l);
+        } };
     },
     steps: [
       { cam: [-2.6, 1.7, 2.0], tgt: [-.45, 1.2, 0], tags: ["keyhole"] },
       { cam: [-.4, 2.7, 2.8], tgt: [.5, 1.6, 0], tags: ["tig"] },
       { cam: [-1.9, 1.5, 1.5], tgt: [.66, 1.2, 0], tags: ["fusion", "onepass"] },
+      { cam: [2.45, 1.2, 4.6], tgt: [2.75, .62, 0], tags: ["inner", "dist"] }, // dalla finestra aperta nel tubo saldato
     ],
   },
   "ripresa-interna": {
     R: 1.8, wall: .16,
     build: (g, R, wall) => {
-      const ext = tigTorch(R + .08); ext.position.x = -.6; g.add(ext);
-      const inner = tigTorch(0); inner.rotation.z = Math.PI; inner.position.set(.25, R - wall - .08, 0); g.add(inner); // torcia interna rivolta verso l'alto
-      const steel = new THREE.MeshStandardMaterial({ color: 0x59616a, metalness: .8, roughness: .4 });
-      const boom = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, 6, 20), steel); boom.rotation.z = Math.PI / 2; boom.position.set(-2.6, R - wall - 2.3, -.18); g.add(boom);
-      const arm = new THREE.Mesh(new THREE.BoxGeometry(.12, .5, .12), steel); arm.position.set(.12, R - wall - 2.1, -.18); g.add(arm);
+      const EX = .25 - 4.8; // torcia esterna ~60 cm prima di quella interna (1 unità ≈ 124 mm alla scala della torcia)
+      const ext = tigTorch(R + .08); ext.position.x = EX; g.add(ext);
+      const inner = innerTig(.005, 1400); inner.position.set(.25, R - wall - .08, 0); g.add(inner); // torcia interna, ceramica verso l'alto, barra fino a monte
       const cam = new THREE.Mesh(new THREE.BoxGeometry(.26, .16, .2), new THREE.MeshStandardMaterial({ color: 0x23272b, metalness: .4, roughness: .5 }));
       cam.position.set(.85, R - wall - .55, .35); g.add(cam);
-      return { arcs: [{ x: -.6, tip: R + .08, w: .07, col: BLUE }, { x: .25, tip: R - wall - .08, w: .06, col: BLUE, osc: true }], cut: .5, fz: [.34, .22, .16, .02, .004],
-        anchors: { outside: [-.6, R + .05, 0], relief: [-.2, R - wall - .05, 0], inner: [.25, R - wall - .3, 0], flat: [1.7, R - wall - .01, 0], fusion: [.5, R - .08, 0] },
+      return { arcs: [{ x: EX, tip: R + .08, w: .07, col: BLUE }, { x: .25, tip: R - wall - .08, w: .06, col: BLUE, osc: true }], cut: .5, fz: [.34, .22, .16, .02, .004], dim: [EX, .25, R + .45],
+        anchors: { outside: [EX, R + .05, 0], relief: [-3.0, R - wall - .05, 0], inner: [.25, R - wall - .95, 0], flat: [1.2, R - wall - .01, 0], fusion: [.5, R - .08, 0], dist: [(EX + .25) / 2, R + .45, 0] },
         extra: ({ scene, R: r, wall: w, heat }) => { // cordone interno: in rilievo prima della torcia interna, appiattito dopo
-          const bump = new THREE.Mesh(new THREE.BoxGeometry(.85, .05, .12), new THREE.MeshStandardMaterial({ color: 0x9aa1a7, metalness: .9, roughness: .4, emissive: 0xffffff, emissiveMap: heat, emissiveIntensity: 1.2 }));
-          bump.position.set(-.18, r - w - .02, 0); scene.add(bump);
+          const bump = new THREE.Mesh(new THREE.BoxGeometry(.25 - EX, .05, .12), new THREE.MeshStandardMaterial({ color: 0x9aa1a7, metalness: .9, roughness: .4, emissive: 0xffffff, emissiveMap: heat, emissiveIntensity: 1.2 }));
+          bump.position.set((EX + .25) / 2, r - w - .02, 0); scene.add(bump);
         } };
     },
     steps: [
-      { cam: [-2.6, 2.9, 2.4], tgt: [-.6, 1.9, 0], tags: ["outside"] },
-      { cam: [-2.4, 1.1, 2.4], tgt: [0, 1.5, 0], tags: ["relief", "inner"] },
+      { cam: [-6.55, 2.9, 2.4], tgt: [-4.55, 1.9, 0], tags: ["outside"] },
+      { cam: [-2.0, 2.5, 9.4], tgt: [-2.0, 1.05, 0], tags: ["relief", "inner", "dist"] },
       { cam: [-2.0, 1.55, 1.9], tgt: [.55, 1.6, 0], tags: ["flat"] },
     ],
   },
@@ -148,6 +159,7 @@ export function createProcessWorld(host: HTMLElement, key: ProcessKey, opts: { r
   const rigs: Rig[] = B.rigs ?? [{ z: 0, fz: B.fz, arcs: B.arcs, full: true }];
   const steel = new THREE.MeshStandardMaterial({ map: brushed, color: 0xe4e8eb, metalness: .95, roughness: .3 });
   const steelIn = new THREE.MeshStandardMaterial({ color: 0x8d949a, metalness: .9, roughness: .45, side: THREE.BackSide });
+  const steelInDark = new THREE.MeshStandardMaterial({ color: 0x3c4146, metalness: .85, roughness: .5, side: THREE.BackSide }); // interno visto dallo spaccato: in ombra, l'arco si legge
   const ghostMat = new THREE.MeshStandardMaterial({ color: 0xcfd6db, metalness: .6, roughness: .3, transparent: true, opacity: .16, depthWrite: false, side: THREE.DoubleSide });
   const faceMat = new THREE.MeshStandardMaterial({ color: 0xd9dde0, metalness: .85, roughness: .32, side: THREE.DoubleSide });
   const beadMat = new THREE.MeshStandardMaterial({ color: 0xaab0b5, metalness: .9, roughness: .35, emissive: 0xffffff, emissiveMap: heat, emissiveIntensity: 1.8 });
@@ -173,7 +185,7 @@ export function createProcessWorld(host: HTMLElement, key: ProcessKey, opts: { r
   const arcGroups: { g: THREE.Group; a: Arc }[] = [];
   for (const rig of rigs) {
     const z = rig.z, first = Math.min(...rig.arcs.map((a) => a.x));
-    tube(R, steel, cut + L / 2, z); tube(R - wall, steelIn, cut + L / 2, z);
+    const solid = tubeCut(R, R - wall, cut, cut + L, { out: steel, in: B.win && rig === rigs[0] ? steelInDark : steelIn, face: faceMat }, rig === rigs[0] ? B.win : undefined); solid.position.z = z; scene.add(solid);
     tube(R, ghostMat, cut - L / 2, z); tube(R - wall, ghostMat, cut - L / 2, z);
     const face = new THREE.Mesh(new THREE.RingGeometry(R - wall, R, 160), faceMat); face.rotation.y = -Math.PI / 2; face.position.set(cut, 0, z); scene.add(face);
     // giunto aperto in arrivo, cordone caldo sul dritto; sul rovescio solo se la penetrazione è completa
@@ -196,6 +208,12 @@ export function createProcessWorld(host: HTMLElement, key: ProcessKey, opts: { r
     }
   }
   B.extra?.({ scene, R, wall, cut, heat, glow });
+  const dim = new THREE.Group(); scene.add(dim); // quota tra le torce: linea con due tacche, visibile solo nel passo con l'etichetta "dist"
+  if (B.dim) {
+    const [a, b, y] = B.dim, dm = new THREE.MeshBasicMaterial({ color: 0x8fd16a });
+    const line = new THREE.Mesh(new THREE.BoxGeometry(b - a, .008, .008), dm); line.position.set((a + b) / 2, y, 0); dim.add(line);
+    for (const x of [a, b]) { const t = new THREE.Mesh(new THREE.BoxGeometry(.008, .14, .008), dm); t.position.set(x, y, 0); dim.add(t); }
+  }
   const main = rigs[0], first = Math.min(...main.arcs.map((a) => a.x));
   if (key === "plasma-key-hole") for (const a of main.arcs.slice(0, 2)) {
     const kh = new THREE.Mesh(new THREE.CylinderGeometry(.014, .024, wall, 16), new THREE.MeshBasicMaterial({ color: 0xffa04a, transparent: true, opacity: .75, blending: THREE.AdditiveBlending, depthWrite: false }));
@@ -247,6 +265,7 @@ export function createProcessWorld(host: HTMLElement, key: ProcessKey, opts: { r
       }
       dirt.instanceMatrix.needsUpdate = true;
     }
+    dim.visible = goal().tags.includes("dist");
     for (const t of tags) {
       const on = goal().tags.includes(t.key);
       proj.copy(t.p).project(camera);

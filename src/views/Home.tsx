@@ -80,7 +80,7 @@ export function Home({ lang }: { lang: Lang }) {
           { nav: L(lang, "Dentro", "Inside"), weight: 1.2, body: (<>
             <p className="world-eye mono">04 · {L(lang, "Dentro il tubo", "Inside the pipe")}</p>
             <h2 className="d2">{L(lang, "Penetrazione completa.", "Full penetration.")}</h2>
-            <p>{L(lang, "Il key-hole attraversa tutta la parete: la radice esce regolare all'interno, senza seconda passata. Davanti alla torcia, il giunto è ancora aperto.", "The key-hole crosses the whole wall: the root comes out even on the inside, with no second pass. Ahead of the torch, the joint is still open.")}</p>
+            <p>{L(lang, "Il key-hole attraversa tutta la parete. Circa 60 cm dopo, una torcia TIG interna capovolta ripassa la radice dall'interno. Davanti alla torcia esterna, il giunto è ancora aperto.", "The key-hole crosses the whole wall. About 60 cm further on, an upside-down internal TIG torch re-passes the root from the inside. Ahead of the outer torch, the joint is still open.")}</p>
           </>) },
           { nav: L(lang, "Impianti", "Plants"), weight: 1, body: (<>
             <p className="world-eye mono">{L(lang, "Dal", "Since")} {n.since}</p>

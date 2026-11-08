@@ -4,6 +4,7 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 import { laserHead } from "../laserHead";
 import { comboHead } from "../comboHead";
 import { plasmaHead } from "../plasmaHead";
+import { innerTig } from "../innerTig";
 
 /* Mondo scroll della hero: un'officina luminosa con tre linee parallele, una per tecnologia.
    Ogni linea racconta il processo: coil di nastro → rulli formatori che chiudono il tubo → torcia sul giunto → taglio → tubi finiti.
@@ -39,10 +40,10 @@ export const CHAPTERS: Chapter[] = [
     via: [{ p: [1, 23, -30], t: [0, 15, -36] }, { p: [-3, 10.5, -39], t: [0, 13, -52] }] },
   { pos: [6.5, 11.6, -43.5], target: [0.6, 11.6, -52], fov: 34, shift: -6, fog: .007, exposure: .9, focus: 2,
     via: [{ p: [0, 12.8, -40.5], t: [0.2, 12.4, -52] }] },
-  { pos: [13.5, 9.1, -52], target: [-8, 9.9, -52], fov: 50, shift: 0, fog: .02, exposure: 1.1, focus: 2,
+  { pos: [13.5, 9.0, -51.2], target: [-8, 9.9, -52], fov: 50, shift: 0, fog: .02, exposure: 1.1, focus: 2,
     via: [{ p: [10, 11.8, -45], t: [16, 9.5, -52] }, { p: [20, 9.3, -52], t: [10, 9.3, -52] }] },
   { pos: [-50, 30, 22], target: [4, 7, -26], fov: 42, shift: -3, fog: .006, exposure: .9, focus: -1,
-    via: [{ p: [-10, 9.15, -52], t: [-30, 9.4, -52] }, { p: [-30, 9.15, -52], t: [-50, 9.4, -52] }, { p: [-42, 11, -52], t: [-50, 12, -40] }] },
+    via: [{ p: [-10, 9.15, -51.3], t: [-30, 9.4, -52] }, { p: [-30, 9.15, -52], t: [-50, 9.4, -52] }, { p: [-42, 11, -52], t: [-50, 12, -40] }] },
 ];
 
 const canvasTex = (w: number, h: number, draw: (g: CanvasRenderingContext2D) => void) => {
@@ -255,6 +256,15 @@ export async function createWeldWorld(host: HTMLElement, opts: { reduced: boolea
   const combo = comboHead(0); combo.g.scale.setScalar(2.12); combo.g.position.set(0, AXIS + LINES[1].R + .1, LINES[1].z); scene.add(combo.g);
   await idle();
   const plasma = plasmaHead(0, 0.0062); plasma.g.position.set(0, AXIS + LINES[2].R + .12, LINES[2].z); scene.add(plasma.g);
+  // torcia TIG interna capovolta, ceramica verso l'alto, ~60 cm dopo la saldatura: ripassa il cordone dall'interno.
+  const INNER_X = 6, innerTop = AXIS + Ri, IZ = P.z;
+  // girata verso l'uscita: la camera entra da +x e vede la ceramica; la barra esce dal tubo e prosegue nella lancia
+  const IS = .0052, IB = 300, barY = innerTop - .08 - 187 * IS, barX = INNER_X + IB * IS;
+  const innerT = innerTig(IS, IB); innerT.rotation.y = Math.PI; innerT.position.set(INNER_X, innerTop - .08, IZ); scene.add(innerT);
+  const silver = new THREE.MeshStandardMaterial({ color: 0xc9ced3, metalness: 1, roughness: .3 });
+  const lance = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, PIPE.x1 + 2 - barX, 16).rotateZ(Math.PI / 2), silver);
+  lance.position.set((barX + PIPE.x1 + 2) / 2, barY, IZ - .5); scene.add(lance);
+  const lanceArm = new THREE.Mesh(new THREE.BoxGeometry(.12, .1, .5), silver); lanceArm.position.set(barX - .06, barY, IZ - .3); scene.add(lanceArm);
   await idle();
   [laser, combo.g, plasma.g].forEach((g) => g.updateMatrixWorld(true));
 
@@ -293,6 +303,13 @@ export async function createWeldWorld(host: HTMLElement, opts: { reduced: boolea
     s.vel.set([(Math.random() - .5) * 2.4 * s.spread + .6, (1 + Math.random() * 2) * Math.sqrt(s.spread), (Math.random() - .5) * 2.4 * s.spread], k * 3);
     s.life[k] = .3 + Math.random() * .9;
   };
+  const innerArc = mkArc(INNER_X, innerTop, .08, .06, IZ, 0x8fb8ff); innerArc.rotation.z = Math.PI; // arco verso l'alto, sulla radice
+  const innerLight = new THREE.PointLight(0x8fb8ff, 5, 6, 1.8); innerLight.position.set(INNER_X, innerTop - .35, IZ + .3); scene.add(innerLight);
+  const innerFlare = new THREE.Sprite(new THREE.SpriteMaterial({ map: flareTex, color: 0x8fb8ff, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  innerFlare.position.set(INNER_X, innerTop - .03, IZ); innerFlare.scale.setScalar(.9); scene.add(innerFlare);
+  // radice ripassata: torna incandescente sotto la torcia interna e si raffredda verso l'uscita
+  const reRoot = new THREE.Mesh(new THREE.BoxGeometry(PIPE.x1 - INNER_X, .022, .07), new THREE.MeshBasicMaterial({ color: 0xffffff, map: heat }));
+  reRoot.position.set((PIPE.x1 + INNER_X) / 2, innerTop - .014, IZ); scene.add(reRoot);
   stations.forEach((st) => { for (let k = 0; k < st.sparks.n; k++) { emit(st.sparks, k); st.sparks.life[k] = Math.random(); } });
 
   // ---- luci: cielo diffuso dai lucernari, sole dalle finestre con ombre, faro sulla stazione a fuoco
@@ -385,6 +402,7 @@ export async function createWeldWorld(host: HTMLElement, opts: { reduced: boolea
       s.geo.attributes.position.needsUpdate = true;
     });
     insideGlow.intensity = 6 * (opts.reduced ? 1 : .8 + Math.random() * .4);
+    innerLight.intensity = 5 * (opts.reduced ? 1 : .75 + Math.random() * .5); innerArc.scale.y = opts.reduced ? 1 : .8 + Math.random() * .4; innerFlare.material.opacity = innerLight.intensity / 6;
     renderer.render(scene, camera);
     if (!ready) { ready = true; opts.onReady?.(); }
     raf = requestAnimationFrame(frame);

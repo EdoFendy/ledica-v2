@@ -5,7 +5,7 @@ import type { ProcessKey } from "./world/processWorld";
 
 export type ProcessText = { steps: { title: string; text: string }[]; tags: Record<string, string>; drag: string; caption: string; wave?: string };
 
-/** Spaccato 3D del processo in tre passi. Avanza da solo finché l'utente non tocca la scena o un passo. */
+/** Spaccato 3D del processo a passi. Avanza da solo finché l'utente non tocca la scena o un passo. */
 export function ProcessScene({ tech, text }: { tech: ProcessKey; text: ProcessText }) {
   const box = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
