@@ -259,7 +259,7 @@ export async function createWeldWorld(host: HTMLElement, opts: { reduced: boolea
   // torcia TIG interna capovolta, ceramica verso l'alto, ~60 cm dopo la saldatura: ripassa il cordone dall'interno.
   const INNER_X = 6, innerTop = AXIS + Ri, IZ = P.z;
   // girata verso l'uscita: la camera entra da +x e vede la ceramica; la barra esce dal tubo e prosegue nella lancia
-  const IS = .0052, IB = 300, barY = innerTop - .08 - 187 * IS, barX = INNER_X + IB * IS;
+  const IS = .0052, IB = 300, barY = innerTop - .08 - 240 * IS, barX = INNER_X + IB * IS;
   const innerT = innerTig(IS, IB); innerT.rotation.y = Math.PI; innerT.position.set(INNER_X, innerTop - .08, IZ); scene.add(innerT);
   const silver = new THREE.MeshStandardMaterial({ color: 0xc9ced3, metalness: 1, roughness: .3 });
   const lance = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, PIPE.x1 + 2 - barX, 16).rotateZ(Math.PI / 2), silver);
